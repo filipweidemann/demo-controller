@@ -26,10 +26,7 @@ var testContextCancel context.CancelFunc
 func packageSetup() {
 	log.Print("PACKAGE SETUP")
 	testContext, testContextCancel = context.WithCancel(context.Background())
-	testEnv = &envtest.Environment{
-
-		ErrorIfCRDPathMissing: false,
-	}
+	testEnv = &envtest.Environment{}
 
 	cfg, err := testEnv.Start()
 	if err != nil {

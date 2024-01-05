@@ -10,19 +10,19 @@ type TestPodOptions struct {
 }
 
 func CreateTestPod(options *TestPodOptions) corev1.Pod {
-	podMeta := metav1.ObjectMeta{Name: "testpod", Namespace: "default"}
+	podMeta := metav1.ObjectMeta{
+		Name:      "testpod",
+		Namespace: "default",
+		Annotations: map[string]string{
+			"demo-controller/label-pod": "true",
+		},
+	}
 	podSpec := corev1.PodSpec{Containers: []corev1.Container{
 		{
 			Name:  "nginx",
 			Image: "nginx",
 		},
 	}}
-
-	if options.Annotation != "" {
-		podMeta.Annotations = map[string]string{
-			ANNOTATION: "true",
-		}
-	}
 
 	podReq := corev1.Pod{ObjectMeta: podMeta, Spec: podSpec}
 	return podReq
