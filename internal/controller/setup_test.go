@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -47,18 +47,16 @@ func packageSetup() {
 	}
 
 	userOptions := envtest.User{Name: "integration-tests", Groups: []string{"system:masters"}}
-	userConfig, err := testEnv.ControlPlane.AddUser(userOptions, cfg)
+	_, err = testEnv.ControlPlane.AddUser(userOptions, cfg)
 	if err != nil {
 		log.Fatalf("Could not create control plane user")
 	}
-	adminClientSet, err = clientset.NewForConfig(userConfig.Config())
-	if err != nil {
-		log.Fatalf("Couldn't create admin user")
-	}
+	adminClientSet = clientset.NewForConfigOrDie(cfg)
 
 	mgrOptions := ControllerManagerOptions{
 		Scheme: scheme.Scheme,
 	}
+
 	mgr, err := CreateControllerManager(&mgrOptions)
 	ctrl := &PodReconciler{
 		Client: mgr.GetClient(),
