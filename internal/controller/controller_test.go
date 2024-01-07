@@ -12,8 +12,8 @@ import (
 
 func TestPodWithoutAnnotation(t *testing.T) {
 	podReq := CreateTestPod(&TestPodOptions{})
-	pod, err := adminClientSet.CoreV1().Pods("default").Create(context.Background(), &podReq, metav1.CreateOptions{})
-	defer adminClientSet.CoreV1().Pods("default").Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
+	pod, err := k8sClientSet.CoreV1().Pods("default").Create(context.Background(), &podReq, metav1.CreateOptions{})
+	defer k8sClientSet.CoreV1().Pods("default").Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
 
 	if err != nil {
 		t.Error("Could not create Pod")
@@ -23,16 +23,16 @@ func TestPodWithoutAnnotation(t *testing.T) {
 }
 
 func TestPodWithAnnotation(t *testing.T) {
-	podReq := CreateTestPod(&TestPodOptions{Annotation: ANNOTATION})
+	podReq := CreateTestPod(&TestPodOptions{SetAnnotation: true})
 
-	_, err := adminClientSet.CoreV1().Pods("default").Create(context.Background(), &podReq, metav1.CreateOptions{})
+	_, err := k8sClientSet.CoreV1().Pods("default").Create(context.Background(), &podReq, metav1.CreateOptions{})
 	if err != nil {
 		t.Error("Could not create Pod")
 	}
 
 	time.Sleep(time.Second * 1)
 
-	pod, err := adminClientSet.CoreV1().Pods("default").Get(context.Background(), "testpod", metav1.GetOptions{})
+	pod, err := k8sClientSet.CoreV1().Pods("default").Get(context.Background(), "testpod", metav1.GetOptions{})
 	if err != nil {
 		t.Error("Couldn't fetch updated pod")
 	}

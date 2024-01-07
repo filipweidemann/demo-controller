@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"testing"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -20,14 +18,12 @@ type ControllerManagerOptions struct {
 
 func CreateControllerManager(opts *ControllerManagerOptions) (ctrl.Manager, error) {
 	ctrlOptions := ctrl.Options{
-		Scheme:                 opts.Scheme,
-		Metrics:                server.Options{BindAddress: opts.MetricsBindAddr},
-		HealthProbeBindAddress: opts.ProbeBindAddr,
-		LeaderElection:         true,
-		LeaderElectionID:       "pod-labeller",
-	}
-	if testing.Testing() {
-		ctrlOptions.LeaderElectionNamespace = "kube-system"
+		Scheme:                  opts.Scheme,
+		Metrics:                 server.Options{BindAddress: opts.MetricsBindAddr},
+		HealthProbeBindAddress:  opts.ProbeBindAddr,
+		LeaderElection:          true,
+		LeaderElectionID:        "pod-labeller",
+		LeaderElectionNamespace: "kube-system",
 	}
 
 	// When testing, we inject the config from the envtest cluster

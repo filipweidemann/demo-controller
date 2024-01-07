@@ -6,17 +6,21 @@ import (
 )
 
 type TestPodOptions struct {
-	Annotation string
+	SetAnnotation bool
 }
 
-func CreateTestPod(options *TestPodOptions) corev1.Pod {
+func CreateTestPod(tpo *TestPodOptions) corev1.Pod {
 	podMeta := metav1.ObjectMeta{
 		Name:      "testpod",
 		Namespace: "default",
-		Annotations: map[string]string{
-			"demo-controller/label-pod": "true",
-		},
 	}
+
+	if tpo.SetAnnotation {
+		podMeta.Annotations = map[string]string{
+			ANNOTATION: "true",
+		}
+	}
+
 	podSpec := corev1.PodSpec{Containers: []corev1.Container{
 		{
 			Name:  "nginx",

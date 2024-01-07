@@ -15,10 +15,8 @@ import (
 
 var testEnv *envtest.Environment
 var cfg *rest.Config
-var userConfig *rest.Config
-var userClient client.Client
-var k8sclient client.Client
-var adminClientSet *clientset.Clientset
+var k8sClient client.Client
+var k8sClientSet *clientset.Clientset
 
 var testContext context.Context
 var testContextCancel context.CancelFunc
@@ -32,30 +30,16 @@ func packageSetup() {
 		log.Fatalf("Failed to setup envtest, %v", err)
 	}
 
-	k8sclient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	if err != nil {
 		log.Fatalf("Could not create k8s client: %v", err)
 	}
-
-	userOptions := envtest.User{Name: "integration-tests", Groups: []string{"system:masters"}}
-	user, err := testEnv.ControlPlane.AddUser(userOptions, cfg)
-	if err != nil {
-		log.Fatalf("Could not create control plane user")
-	}
-
-	userConfig := user.Config()
-	userClient, err = client.New(userConfig, client.Options{})
-	if err != nil {
-		log.Fatalf("Could not create userClient")
-	}
-
-	adminClientSet = clientset.NewForConfigOrDie(cfg)
+	k8sClientSet = clientset.NewForConfigOrDie(cfg)
 
 	mgrOptions := ControllerManagerOptions{
 		Scheme:    scheme.Scheme,
 		K8sConfig: cfg,
 	}
-
 	mgr, err := CreateControllerManager(&mgrOptions)
 	controller := &PodReconciler{
 		Client: mgr.GetClient(),
