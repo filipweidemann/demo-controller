@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -29,11 +30,13 @@ func TestPodWithAnnotation(t *testing.T) {
 		t.Error("Could not create Pod")
 	}
 
+	time.Sleep(time.Second * 1)
+
 	pod, err := adminClientSet.CoreV1().Pods("default").Get(context.Background(), "testpod", metav1.GetOptions{})
 	if err != nil {
 		t.Error("Couldn't fetch updated pod")
 	}
 
 	assert.Equal(t, "true", pod.Annotations[ANNOTATION])
-	assert.Equal(t, "nginx", pod.Labels[LABEL])
+	assert.Equal(t, "testpod", pod.Labels[LABEL])
 }

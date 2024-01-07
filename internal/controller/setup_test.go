@@ -1,12 +1,11 @@
 package controller
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
 
-	"golang.org/x/net/context"
-	corev1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -16,15 +15,15 @@ import (
 
 var testEnv *envtest.Environment
 var cfg *rest.Config
+var userConfig *rest.Config
+var userClient client.Client
 var k8sclient client.Client
 var adminClientSet *clientset.Clientset
-var podController *PodReconciler
 
 var testContext context.Context
 var testContextCancel context.CancelFunc
 
 func packageSetup() {
-	log.Print("PACKAGE SETUP")
 	testContext, testContextCancel = context.WithCancel(context.Background())
 	testEnv = &envtest.Environment{}
 
@@ -33,42 +32,49 @@ func packageSetup() {
 		log.Fatalf("Failed to setup envtest, %v", err)
 	}
 
-	err = corev1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		log.Fatalf("Couldn't add kind to scheme")
-	}
-
 	k8sclient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	if err != nil {
 		log.Fatalf("Could not create k8s client: %v", err)
 	}
 
 	userOptions := envtest.User{Name: "integration-tests", Groups: []string{"system:masters"}}
-	_, err = testEnv.ControlPlane.AddUser(userOptions, cfg)
+	user, err := testEnv.ControlPlane.AddUser(userOptions, cfg)
 	if err != nil {
 		log.Fatalf("Could not create control plane user")
 	}
+
+	userConfig := user.Config()
+	userClient, err = client.New(userConfig, client.Options{})
+	if err != nil {
+		log.Fatalf("Could not create userClient")
+	}
+
 	adminClientSet = clientset.NewForConfigOrDie(cfg)
 
 	mgrOptions := ControllerManagerOptions{
-		Scheme: scheme.Scheme,
+		Scheme:    scheme.Scheme,
+		K8sConfig: cfg,
 	}
 
 	mgr, err := CreateControllerManager(&mgrOptions)
-	ctrl := &PodReconciler{
+	controller := &PodReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}
 
-	if err := ctrl.SetupWithManager(mgr); err != nil {
+	if err := controller.SetupWithManager(mgr); err != nil {
 		log.Fatalf(err.Error(), "unable to create controller", "controller", "Pod")
 	}
 
-	go mgr.Start(testContext)
+	go func() {
+		err := mgr.Start(testContext)
+		if err != nil {
+			println("An error occured inside the controller: ", err.Error())
+		}
+	}()
 }
 
 func packageCleanup() {
-	log.Print("PACKAGE CLEANUP")
 	testContextCancel()
 	testEnv.Stop()
 }
