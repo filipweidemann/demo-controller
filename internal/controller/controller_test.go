@@ -7,7 +7,6 @@ import (
 
 	"github.com/filipweidemann/demo-controller/internal/controller"
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/assert"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -20,26 +19,27 @@ const (
 
 func TestPodWithoutAnnotation(t *testing.T) {
 	podReq := CreateTestPod(&TestPodOptions{})
+	defer k8sClientSet.CoreV1().Pods("default").Delete(context.Background(), podReq.Name, metav1.DeleteOptions{})
+
 	pod, err := k8sClientSet.CoreV1().Pods("default").Create(context.Background(), &podReq, metav1.CreateOptions{})
-	defer k8sClientSet.CoreV1().Pods("default").Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
 
 	if err != nil {
 		t.Error("Could not create Pod")
 	}
 
-	assert.Equal(t, pod.Labels[controller.LABEL], "")
+	Expect(pod.Labels[controller.LABEL]).Should(Equal(""))
 }
 
 func TestPodWithAnnotation(t *testing.T) {
-	g := NewWithT(t)
 	podReq := CreateTestPod(&TestPodOptions{SetAnnotation: true})
+	defer k8sClientSet.CoreV1().Pods("default").Delete(context.Background(), podReq.Name, metav1.DeleteOptions{})
 
 	_, err := k8sClientSet.CoreV1().Pods("default").Create(context.Background(), &podReq, metav1.CreateOptions{})
 	if err != nil {
 		t.Error("Could not create Pod")
 	}
 
-	g.Eventually(func() bool {
+	Eventually(func() bool {
 		pod, err := k8sClientSet.CoreV1().Pods("default").Get(context.Background(), "testpod", metav1.GetOptions{})
 		if err != nil {
 			t.Error("Couldn't fetch updated pod")
