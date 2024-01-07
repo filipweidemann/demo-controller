@@ -1,4 +1,4 @@
-package controller
+package controller_test
 
 import (
 	"context"
@@ -6,6 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/filipweidemann/demo-controller/internal/controller"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -36,12 +39,12 @@ func packageSetup() {
 	}
 	k8sClientSet = clientset.NewForConfigOrDie(cfg)
 
-	mgrOptions := ControllerManagerOptions{
+	mgrOptions := controller.ControllerManagerOptions{
 		Scheme:    scheme.Scheme,
 		K8sConfig: cfg,
 	}
-	mgr, err := CreateControllerManager(&mgrOptions)
-	controller := &PodReconciler{
+	mgr, err := controller.CreateControllerManager(&mgrOptions)
+	controller := &controller.PodReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}
@@ -65,6 +68,7 @@ func packageCleanup() {
 
 func TestMain(m *testing.M) {
 	packageSetup()
+	gomega.RegisterFailHandler(ginkgo.Fail)
 	rc := m.Run()
 	packageCleanup()
 	os.Exit(rc)

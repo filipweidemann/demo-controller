@@ -1,6 +1,7 @@
-package controller
+package controller_test
 
 import (
+	"github.com/filipweidemann/demo-controller/internal/controller"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +18,7 @@ func CreateTestPod(tpo *TestPodOptions) corev1.Pod {
 
 	if tpo.SetAnnotation {
 		podMeta.Annotations = map[string]string{
-			ANNOTATION: "true",
+			controller.ANNOTATION: "true",
 		}
 	}
 
